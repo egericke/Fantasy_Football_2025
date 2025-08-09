@@ -146,7 +146,6 @@ class PlayerTableContainer extends React.PureComponent<IPlayerTableProps, IPlaye
     return (
       <PlayerTable
         {...this.props}
-        adpCol={adpCol}
         players={players}
         draftSoon={draftSoon}
         filteredPlayers={filteredPlayers}
