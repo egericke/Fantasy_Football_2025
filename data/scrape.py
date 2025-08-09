@@ -9,13 +9,10 @@ import time
 import pandas as pd
 import numpy as np
 from bs4 import BeautifulSoup, NavigableString
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
-from webdriver_manager.chrome import ChromeDriverManager
+import requests
+# Import Selenium-related classes lazily within setup_driver to avoid a hard
+# dependency when only HTTP scraping is required.  Selenium will be optional
+# and only needed for functions that explicitly call setup_driver.
 
 # --- Configuration and Constants ---
 
@@ -40,8 +37,27 @@ ABRV_TO_TEAM_MAP = {v: k for k, v in TEAM_TO_ABRV_MAP.items()}
 
 # --- WebDriver Management ---
 
-def setup_driver() -> webdriver.Chrome:
-    """Initializes a Selenium WebDriver with robust options for headless environments."""
+def setup_driver():
+    """
+    Lazily import and initialise a Selenium WebDriver for headless scraping.
+
+    If Selenium or Chrome are not available, this function will raise an
+    informative error.  Since most scraping now occurs via HTTP, this
+    function is only needed for other scrapers that explicitly require a
+    browser.  To avoid forcing users to install Selenium unnecessarily, the
+    imports are performed inside the function body.
+    """
+    try:
+        from selenium import webdriver  # type: ignore
+        from selenium.webdriver.chrome.options import Options  # type: ignore
+        from selenium.webdriver.chrome.service import Service  # type: ignore
+        from webdriver_manager.chrome import ChromeDriverManager  # type: ignore
+    except ImportError as e:
+        raise ImportError(
+            "Selenium is required for browser-based scraping but is not installed. "
+            "Install it via `pip install selenium webdriver-manager` if needed."
+        ) from e
+
     LOGGER.info("Setting up new Chrome WebDriver instance.")
     options = Options()
     arguments = [
@@ -51,10 +67,10 @@ def setup_driver() -> webdriver.Chrome:
     ]
     for arg in arguments:
         options.add_argument(arg)
-    
-    # ** THE FIX **: Explicitly tells Selenium where your Chrome binary is.
-    options.binary_location = "/usr/bin/google-chrome"
-    
+
+    # Do not set binary_location unless you know where Chrome is installed.  Let
+    # webdriver-manager pick an appropriate ChromeDriver binary.  If Chrome is
+    # missing entirely, this will still raise an exception.
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
     LOGGER.info("WebDriver setup complete.")
@@ -80,75 +96,64 @@ def _add_player_key(df):
 
 # --- Scraper Functions ---
 
-def scrape_fantasy_pros_adp(driver: webdriver.Chrome, year: int):
-    """Scrape Fantasy Pros ADP."""
+def scrape_fantasy_pros_adp(year: int) -> None:
+    """
+    Retrieve Average Draft Position (ADP) data from FantasyPros without
+    requiring a Selenium browser.  This function uses ``requests`` to fetch
+    the ADP pages directly and ``pandas.read_html`` to parse the tables.
+
+    The resulting CSV will be saved in ``RAW_ADP`` as ``FantasyPros-<year>.csv``
+    containing ``Player``, ``Team``, ``Pos`` and ``ADP`` columns.
+    """
     LOGGER.info(f"Scraping FantasyPros ADP for {year}")
     urls = {
-        "std": f"https://www.fantasypros.com/nfl/adp/overall.php?year={year}",
-        "half_ppr": f"https://www.fantasypros.com/nfl/adp/half-point-ppr-overall.php?year={year}",
-        "ppr": f"https://www.fantasypros.com/nfl/adp/ppr-overall.php?year={year}",
+        'std': f"https://www.fantasypros.com/nfl/adp/overall.php?year={year}",
+        'half_ppr': f"https://www.fantasypros.com/nfl/adp/half-point-ppr-overall.php?year={year}",
+        'ppr': f"https://www.fantasypros.com/nfl/adp/ppr-overall.php?year={year}",
     }
-    merged_df = None
+    merged_df: pd.DataFrame | None = None
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
+    }
     for ppr_type, url in urls.items():
         LOGGER.info(f"Fetching {ppr_type} ADP from {url}")
-        driver.get(url)
-        time.sleep(3) # Increased wait time for reliability
-        
         try:
-            # Use pandas to directly parse the HTML table
-            dfs = pd.read_html(driver.page_source)
+            response = requests.get(url, headers=headers, timeout=15)
+            response.raise_for_status()
+            dfs = pd.read_html(response.text)
             if not dfs:
                 LOGGER.error(f"No tables found at {url}")
                 continue
-            
             df = dfs[0]
-            df = df.rename(columns={"Player Team (Bye)": "Player", "AVG": ppr_type, "Pos": "pos"})
-            
-            # Data Cleaning
-            df["pos"] = df["pos"].str.extract(r'([A-Z]+)')[0]
+            df = df.rename(columns={
+                'Player Team (Bye)': 'Player',
+                'AVG': ppr_type,
+                'Pos': 'pos'
+            })
+            # Data cleaning
+            df['pos'] = df['pos'].str.extract(r'([A-Z]+)')[0]
             df['team'] = df['Player'].apply(lambda x: x.split()[-1] if isinstance(x, str) else None)
             df['name'] = df['Player'].apply(lambda x: ' '.join(x.split()[:-1]) if isinstance(x, str) else None)
-            
-            current_df = df[["name", "team", "pos", ppr_type]].copy()
+            current_df = df[['name', 'team', 'pos', ppr_type]].copy()
             current_df = _add_player_key(current_df)
-
             if merged_df is None:
                 merged_df = current_df
             else:
-                merged_df = pd.merge(merged_df, current_df[['key', ppr_type]], on="key", how="outer")
-
+                merged_df = pd.merge(merged_df, current_df[['key', ppr_type]], on='key', how='outer')
         except Exception as e:
-            LOGGER.error(f"Could not parse data for {ppr_type} at {url}: {e}")
+            LOGGER.error(f"Error retrieving {ppr_type} ADP from {url}: {e}")
             continue
 
-    if merged_df is not None:
-        """
-        Once we've collected ADP data for each scoring format (standard, half‑point PPR and full PPR),
-        compute an overall ADP by taking the mean of the available values. Historically the app
-        expected a single ADP column rather than three separate ones.  The file is also
-        written to disk using a consistent naming scheme (``FantasyPros-{year}.csv``) to
-        match the expectations of the downstream aggregation script.  Previously the code
-        wrote ``FantasyPros-ADP-{year}.csv``, which caused the loader in
-        ``aggregate.py`` to fail to find the ADP file for recent seasons.
-
-        Args:
-            merged_df (pd.DataFrame): Combined dataframe containing ADP values for
-                each scoring format under columns ``std``, ``half_ppr`` and ``ppr``.
-            year (int): The season for which the ADP was scraped.
-        """
-        # Calculate the mean ADP across the available scoring formats.  If a value
-        # is missing for a given scoring format, pandas will ignore it when
-        # computing the mean.  The resulting ADP is rounded to one decimal
-        # place for readability.
+    if merged_df is not None and not merged_df.empty:
+        # Calculate mean ADP across available scoring formats
         numeric_cols = [col for col in ['std', 'half_ppr', 'ppr'] if col in merged_df.columns]
         merged_df['ADP'] = merged_df[numeric_cols].mean(axis=1).round(1)
-        # Standardise column names expected by downstream code
+        # Standardise column names
         merged_df = merged_df.rename(columns={
             'name': 'Player',
             'team': 'Team',
             'pos': 'Pos'
         })
-        # Persist only the columns we need: Player, Team, Pos and ADP
         output_path = os.path.join(RAW_ADP, f"FantasyPros-{year}.csv")
         try:
             merged_df[['Player', 'Team', 'Pos', 'ADP']].to_csv(output_path, index=False)
