@@ -63,12 +63,14 @@ class ScoringModal extends React.Component<IProps> {
     const { formattingScoring, scoring } = this.props;
 
     return (
-      // @ts-ignore
       <Modal
         title="Change scoring"
-        visible={formattingScoring}
+        // In Ant Design v5 the `visible` prop has been replaced by `open` to control
+        // modal visibility.  Updating to the new API avoids deprecation warnings.
+        open={formattingScoring}
         onOk={this.props.toggleScoringFormatting}
-        onCancel={this.props.toggleScoringFormatting}>
+        onCancel={this.props.toggleScoringFormatting}
+      >
         <div className="scoring-columns">
           <div className="scoring-column left-column">
             <h5>Offense</h5>
@@ -77,8 +79,11 @@ class ScoringModal extends React.Component<IProps> {
                 {/* @ts-ignore */}
                 <label htmlFor={k}>{this.offense[k]}</label>
                 <InputNumber
-                  // @ts-ignore
-                  defaultValue={this.multiple[k] ? scoring[k] * this.multiple[k] : scoring[k]}
+                  defaultValue={
+                    this.multiple[k as keyof typeof this.multiple]
+                      ? scoring[k as keyof IScoring] * (this.multiple[k as keyof typeof this.multiple] as number)
+                      : scoring[k as keyof IScoring]
+                  }
                   id={k}
                   onBlur={this.changeScoring}
                   key={k}
@@ -96,8 +101,7 @@ class ScoringModal extends React.Component<IProps> {
                 {/* @ts-ignore */}
                 <label htmlFor={k}>{this.kickers[k]}</label>
                 <InputNumber
-                  // @ts-ignore
-                  defaultValue={scoring[k]}
+                  defaultValue={scoring[k as keyof IScoring]}
                   id={k}
                   key={k}
                   name={k}
@@ -115,8 +119,7 @@ class ScoringModal extends React.Component<IProps> {
                 {/* @ts-ignore */}
                 <label htmlFor={k}>{this.dst[k]}</label>
                 <InputNumber
-                  // @ts-ignore
-                  defaultValue={scoring[k]}
+                  defaultValue={scoring[k as keyof IScoring]}
                   id={k}
                   key={k}
                   name={k}
@@ -134,20 +137,20 @@ class ScoringModal extends React.Component<IProps> {
   /**
    * Update state and re-rank the players with the new scoring
    */
-  private changeScoring = (e: React.ChangeEvent<HTMLInputElement>) => {
+  private changeScoring = (e: React.FocusEvent<HTMLInputElement>) => {
     const { scoring, dispatchSetScoreFormat } = this.props;
     const { id, value } = e.target;
-
-    let numValue: number;
-    // @ts-ignore
-    if (this.multiple[id]) {
-      // @ts-ignore
-      numValue = parseFloat(value) / this.multiple[id];
-    } else {
-      numValue = parseFloat(value);
+    // Cast the id string to a valid scoring key so TypeScript can infer
+    // the correct property type on the scoring object.
+    const key = id as keyof IScoring;
+    let numValue = parseFloat(value) || 0;
+    // If this stat is reported on a 10‑ or 25‑yard basis we normalise it
+    // by dividing by the multiplier to convert back to per‑unit scoring.
+    if (Object.prototype.hasOwnProperty.call(this.multiple, key)) {
+      const divisor = this.multiple[key as keyof typeof this.multiple] as number;
+      numValue = parseFloat(value) / divisor;
     }
-
-    dispatchSetScoreFormat({ ...scoring, [id]: numValue });
+    dispatchSetScoreFormat({ ...scoring, [key]: numValue });
   };
 }
 

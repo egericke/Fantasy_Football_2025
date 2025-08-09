@@ -24,12 +24,15 @@ class RosterModal extends React.Component<IProps> {
     const { formattingRoster, rosterFormat } = this.props;
 
     return (
-      // @ts-ignore
       <Modal
         title="Change roster"
-        visible={formattingRoster}
+        // In Ant Design v5 the `visible` prop has been replaced by `open` to control
+        // modal visibility.  Keeping up to date with the API prevents runtime
+        // warnings and ensures consistent behaviour across versions.
+        open={formattingRoster}
         onOk={this.props.toggleRosterFormatting}
-        onCancel={this.props.toggleRosterFormatting}>
+        onCancel={this.props.toggleRosterFormatting}
+      >
         <div className="position-change-section">
           {this.orderedPositions.map((k) => (
             <div className="position-input-input" key={k}>
@@ -42,8 +45,7 @@ class RosterModal extends React.Component<IProps> {
                 onChange={this.changePositionCount(k)}
                 precision={0}
                 type="number"
-                // @ts-ignore
-                defaultValue={rosterFormat[k]}
+                defaultValue={rosterFormat[k as keyof IRoster]}
               />
             </div>
           ))}
