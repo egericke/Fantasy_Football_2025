@@ -13,23 +13,8 @@ export type Position =
   | 'BENCH'
   | '?'; // Represents an empty or unknown position
 
+// Alias to maintain backwards compatibility for older code
 export type IPlayer = Player;
-/**
- * Maps wildcard positions (like FLEX) to the standard positions they can hold.
- * This is used to determine which players can fill which roster spots.
- */
-export const wildCardPositions: { [key: string]: Set<string> } = {
-  QB: new Set([]),
-  RB: new Set([]),
-  WR: new Set([]),
-  FLEX: new Set(['WR', 'RB', 'TE']),
-  SUPERFLEX: new Set(['QB', 'WR', 'RB', 'TE']),
-  TE: new Set([]),
-  DST: new Set([]),
-  K: new Set([]),
-  BENCH: new Set([]),
-  '?': new Set([]),
-};
 
 /**
  * The primary interface for a single player.
@@ -45,9 +30,9 @@ export interface Player {
   bye?: number;
 
   // Advanced Analytical Metrics
-  VORP: number;       // Value Over Replacement Player - The most important value!
-  Tier: number;       // Positional Tier, for spotting talent drop-offs
-  Volatility: number; // Risk/disagreement metric (1-10 scale)
+  VORP: number;       // Value Over Replacement Player
+  Tier: number;       // Positional Tier
+  Volatility: number; // Risk/disagreement metric
   ADP: number;        // Average Draft Position
 
   // Raw Stat Projections
@@ -62,5 +47,17 @@ export interface Player {
 
   // Optional client-side fields
   href?: string;       // Link to player profile
-  tableName?: string;  // Shortened name for display, e.g., "P. Mahomes"
+  tableName?: string;  // Shortened name for display
+
+  /**
+   * Additional legacy fields used by the reducers and components.
+   * These mirror or derive from the above fields and are optional,
+   * because they may be computed client-side.
+   */
+  name?: string;       // alias for Player
+  pos?: Position;      // alias for Pos
+  adp?: number;        // alias for ADP
+  vor?: number;        // alias for VORP
+  forecast?: number;   // projected fantasy points
+  key?: string;        // unique identifier
 }
