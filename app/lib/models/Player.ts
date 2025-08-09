@@ -23,6 +23,7 @@ export type IPlayer = Player;
  */
 export interface Player {
   // Core Identifying Info
+  id: string;         // A unique, stable identifier for the player.
   Rank: number;       // Overall rank, now based on VORP
   Player: string;
   Pos: 'QB' | 'RB' | 'WR' | 'TE' | 'DST' | 'K';
@@ -46,18 +47,18 @@ export interface Player {
   Rec_TD: number;
 
   // Optional client-side fields
-  href?: string;       // Link to player profile
-  tableName?: string;  // Shortened name for display
+  href?: string;      // Link to player profile
+  tableName?: string; // Shortened name for display
 
   /**
    * Additional legacy fields used by the reducers and components.
    * These mirror or derive from the above fields and are optional,
    * because they may be computed client-side.
    */
-  name?: string;       // alias for Player
-  pos?: Position;      // alias for Pos
-  adp?: number;        // alias for ADP
-  vor?: number;        // alias for VORP
-  forecast?: number;   // projected fantasy points
-  key?: string;        // unique identifier
+  name?: string;      // alias for Player
+  pos?: Position;     // alias for Pos
+  adp?: number;       // alias for ADP
+  vor?: number;       // alias for VORP
+  forecast?: number;  // projected fantasy points
+  key?: string;       // alias for id, useful for React list rendering
 }
