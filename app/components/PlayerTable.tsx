@@ -1,12 +1,19 @@
 import * as React from 'react';
 import { IPlayer } from '../lib/models/Player';
-import { IPlayers } from '../lib/models/Players';
 import { ITeam } from '../lib/models/Team';
 import { IScoring } from '../lib/models/Scoring';
 import PlayerTableRow from './PlayerTableRow';
 
 interface IPlayerTableProps {
-  players: IPlayers;
+  players: {
+    QB: IPlayer[];
+    RB: IPlayer[];
+    WR: IPlayer[];
+    TE: IPlayer[];
+    FLEX: IPlayer[];
+    K: IPlayer[];
+    DST: IPlayer[];
+  };
   teams: ITeam[];
   scoring: IScoring;
   addPlayer: (player: IPlayer) => void;
