@@ -120,7 +120,8 @@ def scrape_fantasy_pros_adp(year: int) -> None:
         try:
             response = requests.get(url, headers=headers, timeout=15)
             response.raise_for_status()
-            dfs = pd.read_html(response.text)
+            # Use BeautifulSoup ('bs4') as the parser to avoid requiring the optional lxml dependency
+            dfs = pd.read_html(response.text, flavor='bs4')
             if not dfs:
                 LOGGER.error(f"No tables found at {url}")
                 continue

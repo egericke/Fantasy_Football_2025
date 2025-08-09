@@ -245,8 +245,41 @@ def load_adp(year: int) -> pd.DataFrame:
     # Resolve directories relative to this file
     base_dir = os.path.dirname(__file__)
     adp_dir = os.path.join(base_dir, 'raw', 'adp')
-    # Patterns to try in order of preference
+    # Patterns to try in order of preference.  We insert a scoring‑specific
+    # filename at the front based on the configured reception weight.  If
+    # ``scoring.json`` defines a high reception weight (>=1) we look for
+    # ``FantasyPros-<year>-PPR.csv``; if it defines a half‑point PPR weight
+    # (0.25 <= weight < 1) we look for ``FantasyPros-<year>-HalfPPR.csv``;
+    # otherwise we assume standard scoring and look for
+    # ``FantasyPros-<year>-Standard.csv``.  This allows the ADP list to
+    # align with your league's scoring system when multiple variants are
+    # available.
+    # Read reception weight from scoring.json if present
+    scoring_weight = 0.5  # default half‑point PPR
+    scoring_path = os.path.join(base_dir, 'scoring.json')
+    if os.path.exists(scoring_path):
+        try:
+            import json
+            with open(scoring_path, 'r') as fh:
+                custom = json.load(fh)
+            # look for 'receptions' weight or fallback to 'rec'
+            if isinstance(custom, dict):
+                receptions_key = next((k for k in custom.keys() if k.lower() in ['receptions', 'rec']), None)
+                if receptions_key:
+                    scoring_weight = float(custom[receptions_key])
+        except Exception:
+            # fall back to default scoring weight
+            pass
+    # Determine scoring type for ADP selection
+    if scoring_weight >= 1.0:
+        scoring_type = 'PPR'
+    elif scoring_weight >= 0.25:
+        scoring_type = 'HalfPPR'
+    else:
+        scoring_type = 'Standard'
+    # Compose patterns with the scoring‑specific file first
     patterns = [
+        os.path.join(adp_dir, f"FantasyPros-{year}-{scoring_type}.csv"),
         os.path.join(adp_dir, f"FantasyPros-{year}.csv"),
         os.path.join(adp_dir, f"FantasyPros-ADP-{year}.csv"),
         os.path.join(adp_dir, f"FantasyPros_{year}_Overall_ADP_Rankings.csv"),
