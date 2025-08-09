@@ -15,7 +15,13 @@ interface IPlayerTableProps {
   nameFilter: string;
   onPickPlayer: (player: Player) => void;
   players: Player[]; // Use the new Player type
-  positionsToShow: Player['Pos'][];
+  /**
+   * Which positions are currently visible in the table.  Passing the special
+   * "?" token indicates that all positions should be shown.  Otherwise the
+   * list must contain one or more of the known player positions (QB, RB,
+   * WR, TE, DST or K).
+   */
+  positionsToShow: (Player['Pos'] | '?')[];
   rbHandcuffs: Set<Player>;
   recommended: Set<Player>; // names that are recommended
   resetPositionFilter: () => void; // reset positions

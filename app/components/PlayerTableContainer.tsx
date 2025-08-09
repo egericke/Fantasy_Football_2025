@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { IPlayer, Position } from '../lib/models/Player';
+import { IPlayer, Player, Position } from '../lib/models/Player';
 import { IScoring } from '../lib/models/Scoring';
 import { NullablePlayer } from '../lib/models/Team';
 import { onRemovePlayer } from '../lib/store/actions/players';
@@ -47,7 +47,15 @@ interface IPlayerTableState {
   /**
    * Only show players in these positions, hide the rest
    */
-  positionsToShow: Position[];
+  /**
+   * Positions currently selected to filter the player list.  Using
+   * `Player['Pos']` restricts this list to actual player positions (QB, RB,
+   * WR, TE, DST, K), while allowing the special "?" token to represent
+   * “all positions”.  Without constraining the type here, the state may
+   * contain other values like FLEX or BENCH which are not valid in the
+   * PlayerTable and cause type errors during compilation.
+   */
+  positionsToShow: (Player['Pos'] | '?')[];
 }
 
 /**
@@ -157,7 +165,7 @@ class PlayerTableContainer extends React.PureComponent<IPlayerTableProps, IPlaye
   /**
    * update the allowable positions in state, used to filter out players by position
    */
-  private togglePositionFilter = (position: Position) => {
+  private togglePositionFilter = (position: Player['Pos'] | '?') => {
     let { positionsToShow } = this.state;
 
     // if it's ?, clear anything else
