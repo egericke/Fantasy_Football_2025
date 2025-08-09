@@ -13,6 +13,7 @@ export type Position =
   | 'BENCH'
   | '?'; // Represents an empty or unknown position
 
+export type IPlayer = Player;
 /**
  * Maps wildcard positions (like FLEX) to the standard positions they can hold.
  * This is used to determine which players can fill which roster spots.
