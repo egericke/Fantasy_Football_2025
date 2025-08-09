@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { IPlayer, Player, Position } from '../lib/models/Player';
+import { IPlayer, Player } from '../lib/models/Player';
 import { IScoring } from '../lib/models/Scoring';
 import { NullablePlayer } from '../lib/models/Team';
 import { onRemovePlayer } from '../lib/store/actions/players';
