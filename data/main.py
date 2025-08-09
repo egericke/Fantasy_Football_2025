@@ -104,9 +104,11 @@ def main(year: int):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        LOGGER.error("Usage: python data/main.py <year>")
-        sys.exit(1)
-
+        current_year = datetime.datetime.now().year
+        LOGGER.info(f"No year argument provided. Defaulting to current year: {current_year}")
+        main(current_year)
+        sys.exit(0)
+    
     try:
         target_year = int(sys.argv[1])
         if not 2000 < target_year < 2030:
