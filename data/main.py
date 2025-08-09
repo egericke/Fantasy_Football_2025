@@ -26,13 +26,10 @@ def main(year: int):
     Orchestrates the entire scraping process.
     """
     LOGGER.info(f"--- Starting Fantasy Football Data Scrape for {year} ---")
-    driver = None  # Initialize driver to None
+    driver = None  # WebDriver is unused for ADP scraping
     try:
-        # This function call is the fix for the "cannot find Chrome binary" error
-        driver = scrape.setup_driver()
-
-        # Run the implemented scraper to retrieve ADP
-        scrape.scrape_fantasy_pros_adp(driver, year)
+        # Run the HTTP-based ADP scraper (no Selenium required)
+        scrape.scrape_fantasy_pros_adp(year)
 
         # After scraping, attempt to aggregate projection and ADP data into a
         # unified dataset.  This step will also compute VORP, tiers and
@@ -47,9 +44,7 @@ def main(year: int):
     except Exception as e:
         LOGGER.critical(f"A critical error occurred: {e}", exc_info=True)
     finally:
-        if driver:
-            driver.quit()
-            LOGGER.info("WebDriver has been shut down.")
+        # No browser to clean up.  Log completion of the scrape.
         LOGGER.info(f"--- Scraping process for {year} has finished. ---")
 
 
