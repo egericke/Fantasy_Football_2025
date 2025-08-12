@@ -13,6 +13,10 @@ export type Position =
   | 'BENCH'
   | '?'; // Represents an empty or unknown position
 
+// Add these missing exports
+export const StarterPositions: Position[] = ['QB', 'RB', 'WR', 'TE', 'FLEX', 'SUPERFLEX', 'K', 'DST'];
+export const DraftablePositions: Position[] = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
+
 // Alias to maintain backwards compatibility for older code
 export type IPlayer = Player;
 
@@ -45,6 +49,30 @@ export interface Player {
   Rec: number;
   Rec_Yds: number;
   Rec_TD: number;
+
+  // Scoring system fields (optional because not all players have all stats)
+  passYds?: number;
+  passTds?: number;
+  passInts?: number;
+  rushYds?: number;
+  rushTds?: number;
+  receptions?: number;
+  receptionYds?: number;
+  receptionTds?: number;
+  fumbles?: number;
+  twoPts?: number;
+  kickExtraPoints?: number;
+  kick019?: number;
+  kick2029?: number;
+  kick3039?: number;
+  kick4049?: number;
+  kick50?: number;
+  dfInts?: number;
+  dfTds?: number;
+  dfSacks?: number;
+  dfPointsAllowedPerGame?: number;
+  dfFumbles?: number;
+  dfSafeties?: number;
 
   // Optional client-side fields
   href?: string;      // Link to player profile
