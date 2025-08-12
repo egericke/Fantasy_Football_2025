@@ -31,93 +31,62 @@ const PlayerTable: React.FC<IPlayerTableProps> = ({
   removePlayer,
   movePlayer,
   updateTeam,
+  mobile = false,
 }) => {
   const { QB, RB, WR, TE, FLEX, K, DST } = players;
+  
+  // Helper function to determine if position is valuable for current team
+  const isValuablePosition = (player: IPlayer): boolean => {
+    // Add your logic here based on teams/roster needs
+    return true; // Simplified for now
+  };
+
+  const renderPlayerRows = (positionPlayers: IPlayer[]) => {
+    return positionPlayers.map((player) => (
+      <PlayerTableRow
+        key={player.id || player.key}
+        byeWeekConflict={false} // You can add logic here
+        draftSoon={false} // You can add logic here  
+        inValuablePosition={isValuablePosition(player)}
+        mobile={mobile}
+        onPickPlayer={addPlayer}
+        player={player}
+        rbHandcuff={false} // You can add logic here
+        recommended={false} // You can add logic here
+        onRemovePlayer={removePlayer}
+      />
+    ));
+  };
+
   return (
     <div className="player-table">
       <div className="player-table-position">
         <h2>QB</h2>
-        {QB.map((p, i) => (
-          <PlayerTableRow
-            key={p.id}
-            index={i}
-            player={p}
-            scoring={scoring}
-            onDrop={movePlayer}
-          />
-        ))}
+        {renderPlayerRows(QB)}
       </div>
       <div className="player-table-position">
         <h2>RB</h2>
-        {RB.map((p, i) => (
-          <PlayerTableRow
-            key={p.id}
-            index={i}
-            player={p}
-            scoring={scoring}
-            onDrop={movePlayer}
-          />
-        ))}
+        {renderPlayerRows(RB)}
       </div>
       <div className="player-table-position">
         <h2>WR</h2>
-        {WR.map((p, i) => (
-          <PlayerTableRow
-            key={p.id}
-            index={i}
-            player={p}
-            scoring={scoring}
-            onDrop={movePlayer}
-          />
-        ))}
+        {renderPlayerRows(WR)}
       </div>
       <div className="player-table-position">
         <h2>TE</h2>
-        {TE.map((p, i) => (
-          <PlayerTableRow
-            key={p.id}
-            index={i}
-            player={p}
-            scoring={scoring}
-            onDrop={movePlayer}
-          />
-        ))}
+        {renderPlayerRows(TE)}
       </div>
       <div className="player-table-position">
         <h2>FLEX</h2>
-        {FLEX.map((p, i) => (
-          <PlayerTableRow
-            key={p.id}
-            index={i}
-            player={p}
-            scoring={scoring}
-            onDrop={movePlayer}
-          />
-        ))}
+        {renderPlayerRows(FLEX)}
       </div>
       <div className="player-table-position">
         <h2>K</h2>
-        {K.map((p, i) => (
-          <PlayerTableRow
-            key={p.id}
-            index={i}
-            player={p}
-            scoring={scoring}
-            onDrop={movePlayer}
-          />
-        ))}
+        {renderPlayerRows(K)}
       </div>
       <div className="player-table-position">
         <h2>DST</h2>
-        {DST.map((p, i) => (
-          <PlayerTableRow
-            key={p.id}
-            index={i}
-            player={p}
-            scoring={scoring}
-            onDrop={movePlayer}
-          />
-        ))}
+        {renderPlayerRows(DST)}
       </div>
     </div>
   );
