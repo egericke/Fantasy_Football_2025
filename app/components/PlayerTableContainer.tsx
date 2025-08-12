@@ -38,12 +38,18 @@ const mapStateToProps = (state: IStoreState) => ({
   scoring: state.scoring,
 });
 
-const mapDispatchToProps = {
-  addPlayer: playerActions.onRemovePlayer, // This seems backwards but matches your usage
-  removePlayer: playerActions.onRemovePlayer,
-  movePlayer: (player: IPlayer, newIndex: number) => ({ type: 'MOVE_PLAYER', player, newIndex }),
-  updateTeam: teamActions.setTrackedTeam,
-};
+const mapDispatchToProps = (dispatch: any) => ({
+  addPlayer: (player: IPlayer) => dispatch(teamActions.onPickPlayer(player)),
+  removePlayer: (player: IPlayer) => dispatch(playerActions.onRemovePlayer(player)),
+  movePlayer: (player: IPlayer, newIndex: number) => {
+    // This would need a proper action if drag-and-drop reordering is implemented
+    console.log('Move player not implemented:', player, newIndex);
+  },
+  updateTeam: (team: ITeam) => {
+    // This would need a proper action for team updates
+    console.log('Update team not implemented:', team);
+  },
+});
 
 const ConnectedPlayerTableContainer = connect(
   mapStateToProps,
