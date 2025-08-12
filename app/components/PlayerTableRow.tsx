@@ -1,7 +1,7 @@
 import { DeleteOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import * as React from 'react';
-import { Player } from '../lib/models/Player';
+import { IPlayer } from '../lib/models/Player';
 
 // Import helper functions from a shared utilities module.  Centralising
 // colour logic improves maintainability and ensures a single source of truth
@@ -12,18 +12,17 @@ import {
   getVolatilityColor,
 } from '../lib/utils/playerColors';
 
-
-// The props interface is updated to use the new Player model
+// The props interface matches what PlayerTable is trying to pass
 interface IPlayerRowProps {
   byeWeekConflict: boolean;
   draftSoon: boolean;
   inValuablePosition: boolean;
   mobile: boolean;
-  onPickPlayer: (player: Player) => void;
-  player: Player; // Use the new Player type
+  onPickPlayer: (player: IPlayer) => void;
+  player: IPlayer;
   rbHandcuff: boolean;
   recommended: boolean;
-  onRemovePlayer: (player: Player) => void;
+  onRemovePlayer: (player: IPlayer) => void;
 }
 
 /**
@@ -62,9 +61,9 @@ function PlayerTableRow({
       {/* --- METRIC COLUMNS --- */}
       <p
         className="col col-vor"
-        style={{ fontWeight: 'bold', color: getVorpColor(player.VORP) }}
+        style={{ fontWeight: 'bold', color: getVorpColor(player.VORP || 0) }}
       >
-        {player.VORP.toFixed(1)}
+        {(player.VORP || 0).toFixed(1)}
       </p>
       <p className="col" style={{ color: 'white', textAlign: 'center' }}>
         <span
@@ -79,9 +78,9 @@ function PlayerTableRow({
       </p>
       <p
         className="col"
-        style={{ color: getVolatilityColor(player.Volatility), fontWeight: 'bold' }}
+        style={{ color: getVolatilityColor(player.Volatility || 0), fontWeight: 'bold' }}
       >
-        {player.Volatility.toFixed(1)}
+        {(player.Volatility || 0).toFixed(1)}
       </p>
       {/* --- END METRIC COLUMNS --- */}
 
